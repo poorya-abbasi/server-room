@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//Voltage & Current
+model ElecMetrics {
+  id        Int         @id @default(autoincrement())
+  value     Float
+  createdAt DateTime    @default(now()) @db.Timestamp(6)
+  sensorID  String
+  Sensor    Sensors      @relation(fields: [sensorID], references: [id])
+}
+
+//Temperature & Humidity & Gas & Dust
+model ConditonMetrics {
+  id        Int         @id @default(autoincrement())
+  value     Float
+  createdAt DateTime    @default(now()) @db.Timestamp(6)
+  sensorID  String
+  Sensor    Sensors      @relation(fields: [sensorID], references: [id])
+}
+
+//Movemet Or Leak
+model Events {
+  id        Int         @id @default(autoincrement())
+  value     Boolean
+  createdAt DateTime    @default(now()) @db.Timestamp(6)
+  sensorID  String
+  Sensor    Sensors      @relation(fields: [sensorID], references: [id])
+}
+
+model Sensors {
+  id        String         @id @default(uuid())
+  name      String
+  type      String
+  ElecMetrics ElecMetrics[]
+  ConditonMetrics ConditonMetrics[]
+  Events Events[]
+}
