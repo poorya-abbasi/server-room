@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(routes);
 
 const startServer = () => {
-    const port = process.env.SERVER_PORT;
+    const port = process.env.PORT;
     z.string().min(1, { message: "You need to specify a port" }).parse(port);
     app.listen(port, () => {
         console.log(`Server is running on port ${port}`);
