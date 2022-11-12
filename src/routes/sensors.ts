@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { z } from "zod";
 const router = express.Router();
 import { PrismaClient } from "@prisma/client";
+import useValidateByType from "../utils/useValidateByType";
 const prisma = new PrismaClient();
 
 router.get("/", async (req: Request, res: Response) => {
@@ -71,6 +72,49 @@ router.get("/:id", async (req: Request, res: Response) => {
         return res.status(404).json({ message: "Sensor not found" });
     } else {
         return res.status(200).json(sensor);
+    }
+});
+
+router.post("/:id", async (req: Request, res: Response) => {
+    const idValidation = z.string().uuid().safeParse(req.params.id);
+    if (!idValidation.success) {
+        return res.status(404).json(idValidation.error);
+    }
+    const sensor = await prisma.sensors.findFirst({
+        where: { id: req.params.id },
+    });
+    if (!sensor) {
+        return res.status(404).json({ message: "Sensor not found" });
+    }
+    const validation = useValidateByType(sensor.type, req.body);
+    if (!validation.success) {
+        return res.status(422).json(validation.error);
+    }
+    const { value } = req.body;
+    if (sensor.type === "electric") {
+        const metric = await prisma.elecMetrics.create({
+            data: {
+                value,
+                sensorID: sensor.id,
+            },
+        });
+        return res.status(200).json(metric);
+    } else if (sensor.type === "condition") {
+        const metric = await prisma.conditonMetrics.create({
+            data: {
+                value,
+                sensorID: sensor.id,
+            },
+        });
+        return res.status(200).json(metric);
+    } else if (sensor.type === "event") {
+        const metric = await prisma.events.create({
+            data: {
+                value,
+                sensorID: sensor.id,
+            },
+        });
+        return res.status(200).json(metric);
     }
 });
 
