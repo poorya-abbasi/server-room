@@ -10,6 +10,16 @@ router.get("/", async (req: Request, res: Response) => {
     res.status(200).json(sensors);
 });
 
+router.get("/stats", async (req: Request, res: Response) => {
+    const stats = {
+        condition: await prisma.conditonMetrics.count(),
+        event: await prisma.events.count(),
+        electric: await prisma.elecMetrics.count(),
+    };
+
+    res.status(200).json(stats);
+});
+
 router.post("/", async (req: Request, res: Response) => {
     const validation = z
         .object({
