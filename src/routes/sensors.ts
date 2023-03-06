@@ -3,6 +3,8 @@ import { z } from "zod";
 const router = express.Router();
 import { PrismaClient } from "@prisma/client";
 import useValidateByType from "../utils/useValidateByType";
+import moment from "moment";
+
 const prisma = new PrismaClient();
 
 router.get("/", async (req: Request, res: Response) => {
@@ -76,6 +78,36 @@ router.get("/:id", async (req: Request, res: Response) => {
     const idValidation = z.string().uuid().safeParse(req.params.id);
     if (!idValidation.success) {
         return res.status(404).json(idValidation.error);
+    }
+    if (req.query.filter) {
+        const textFilter = req.query.filter;
+        const numFilter =
+            textFilter === "week"
+                ? 7
+                : textFilter === "month"
+                ? 30
+                : textFilter === "6month"
+                ? 180
+                : 360;
+        const date = moment().subtract(numFilter, "days").toDate();
+        const sensor = await prisma.sensors.findFirst({
+            where: { id: req.params.id },
+            include: {
+                ElecMetrics: {
+                    where: { createdAt: { gte: date } },
+                    orderBy: { createdAt: "desc" },
+                },
+                ConditonMetrics: {
+                    where: { createdAt: { gte: date } },
+                    orderBy: { createdAt: "desc" },
+                },
+                Events: {
+                    where: { createdAt: { gte: date } },
+                    orderBy: { createdAt: "desc" },
+                },
+            },
+        });
+        return res.status(200).json(sensor);
     }
     const sensor = await prisma.sensors.findFirst({
         where: { id: req.params.id },
