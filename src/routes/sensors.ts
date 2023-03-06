@@ -6,8 +6,15 @@ import useValidateByType from "../utils/useValidateByType";
 const prisma = new PrismaClient();
 
 router.get("/", async (req: Request, res: Response) => {
-    const sensors = await prisma.sensors.findMany();
-    res.status(200).json(sensors);
+    console.log("Query", req.query);
+    if (req.query.type) {
+        return res.status(200).json(
+            await prisma.sensors.findMany({
+                where: { type: { equals: req.query.type as string } },
+            })
+        );
+    }
+    return res.status(200).json(await prisma.sensors.findMany({}));
 });
 
 router.get("/stats", async (req: Request, res: Response) => {
